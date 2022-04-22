@@ -1,3 +1,5 @@
+import datetime
+
 from selenium.webdriver.common.by import By
 
 import main
@@ -116,6 +118,6 @@ def getTicketDetails(urls: list):
 
 print("\n")
 getTicketDetails(GET_ALL_TICKET_URLS())
-
+main.save_to_file(f"Scraped_Texas_Lottery_{datetime.date.today()}")
 
 # TODO ACCESS EACH URL WE FOUND AND GET ODDS AND ADD TO JSON OR DICT WITH NAME OF TICKET AND URL TO TICKET
