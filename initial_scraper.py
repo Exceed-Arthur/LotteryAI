@@ -51,7 +51,7 @@ def findDBClusters(full_string):
 def getTicketDetails(urls: list):
     for url in urls:
         driver.get(url)
-        time.sleep(5)
+        time.sleep(.1)
         page_src = driver.page_source
         findDBClusters(full_string=page_src)
         game_number = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=page_src, p1="Game No. ", p2=" - ")[0]
@@ -84,16 +84,13 @@ def getTicketDetails(urls: list):
                 available_tickets = str(prize_data[i]).replace(",", "").replace("$", "")
                 available_tickets = int(available_tickets)
                 available_ratio_data_points.append(available_tickets)
-
         for i in range(2, len(prize_data), 3):
             claimed_tickets = str(prize_data[i]).replace(",", "").replace("$", "")
             claimed_tickets = int(claimed_tickets)
             claimed_ratio_data_points.append(claimed_tickets)
-        print(available_ratio_data_points)
-        print(claimed_ratio_data_points)
-
-        avg_claimed_ratio = float(sum(available_ratio_data_points)/sum(claimed_ratio_data_points))
-        print(f"Current Prize Availability: {avg_claimed_ratio}%")
+        avg_claimed_ratio = float(sum(claimed_ratio_data_points)/sum(available_ratio_data_points))
+        avg_availability_chance = 1 - avg_claimed_ratio
+        print(f"Current Prize Availability: {round(avg_availability_chance, 4)}%")
         table_cells_prizes = temp_array
         print({"Table Cells": table_cells_prizes})
         # TO DO GAME NUMBER, GAME ODDS, PACK SIZE, TOTAL PRIZES, LARGEST_PRIZE, MEAN_PRIZE, PACK
