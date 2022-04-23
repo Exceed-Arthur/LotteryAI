@@ -117,20 +117,20 @@ def getTicketDetails(urls: list):
         print("\n")
         main_dict['ticket_info'].update({game_number: {"Game Name": game_name,
                                          "Game Number": game_number,
-                                         "Prize Pool": total_prizes_dollars,
-                                         "Average Winnings Per Ticket": guaranteed_per_ticket_usd,
-                                         "Tickets In Circulation": max_tickets,
-                                         "Adjusted Odds": adjusted_odds,
-                                         "Pack Value": f"${guaranteed_per_pack_usd}",
-                                         "Highest Prize": int(str(highest_prize).replace("$", "").replace(",", "")),
-                                         "Current Prize Availability": avg_availability_chance,
-                                         "Pack Size": int(pack_size),
-                                         'Ticket Price USD': float(lowest_prize.replace("$", "")),
+                                         "Prize Pool (USD)": float(total_prizes_dollars),
+                                         "Average Winnings Per Ticket": float(guaranteed_per_ticket_usd),
+                                         "Net Gain/Loss Per Ticket": float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", "")),
+                                         "Tickets In Circulation": float(max_tickets),
+                                         "Adjusted Odds": float(adjusted_odds),
+                                         "Pack Value (USD)": float(guaranteed_per_pack_usd),
+                                         "Highest Prize": float(int(str(highest_prize).replace("$", "").replace(",", ""))),
+                                         "Current Prize Availability": float(avg_availability_chance),
+                                         "Pack Size": float(int(pack_size)),
+                                         'Ticket Price USD': float(str(lowest_prize.replace("$", ""))),
                                          "Image URLS": image_urls
                                          }})
         print(main_dict)
         print("\n")
-
 
 
 print("\n")
