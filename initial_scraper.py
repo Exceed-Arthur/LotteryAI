@@ -77,7 +77,7 @@ def getTicketDetails(urls: list):
     global main_dict
     from collections import OrderedDict
     urls = list(OrderedDict.fromkeys(urls))
-    for url in urls[-5:]:
+    for url in urls[-15:]:
         try:
             driver.get(url)
             time.sleep(.1)
@@ -325,7 +325,7 @@ total_val_added = []
 pack_val_added = []
 net_gain_added = []
 print("\n")
-for i in range(len(main_dict["Pack Value Array"])-1):
+for i in range(0, len(main_dict["Pack Value Array"])-1):
     """AVAILABILITY SORTING"""
     availability = main_dict["Availability Array"][i]
     game_number = main_dict["Prize Availability Index"][availability]["Game Number"]
@@ -333,7 +333,7 @@ for i in range(len(main_dict["Pack Value Array"])-1):
     price = ticket_info["Ticket Price USD"]
 
     game_name = ticket_info["Game Name"]
-    rank = i + 1
+    rank = i
 
     availability_sorted = {"Availability Rank": rank, "Game": game_name, "Game Number": game_number,
                            "Availability": availability, "Price": price}
@@ -347,7 +347,7 @@ for i in range(len(main_dict["Pack Value Array"])-1):
     ticket_info = main_dict['ticket_info'][game_number]
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
-    rank = i + 1
+    rank = i
     availability_sorted = {"Adjusted Odds Rank": rank, "Game": game_name, "Game Number": game_number,
                            "Adjusted Odds": odds, "Price": price}
     if availability_sorted not in odds_added:
@@ -360,7 +360,7 @@ for i in range(len(main_dict["Pack Value Array"])-1):
     ticket_info = main_dict['ticket_info'][game_number]
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
-    rank = i + 1
+    rank = i
     availability_sorted = {"Net Gain Rank": rank, "Game": game_name, "Game Number": game_number,
                            "Net Gain": net_gain, "Price": price}
     if availability_sorted not in net_gain_added:
@@ -373,7 +373,7 @@ for i in range(len(main_dict["Pack Value Array"])-1):
     ticket_info = main_dict['ticket_info'][game_number]
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
-    rank = i + 1
+    rank = i
     availability_sorted = {"Total Prizes Rank": rank, "Game": game_name, "Game Number": game_number,
                            "Total Value Prizes": total_value, "Price": price}
     if availability_sorted not in total_val_added:
@@ -386,7 +386,7 @@ for i in range(len(main_dict["Pack Value Array"])-1):
     ticket_info = main_dict['ticket_info'][game_number]
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
-    rank = i + 1
+    rank = i
     availability_sorted = {"Pack Value Rank": rank, "Game": game_name, "Game Number": game_number, "Pack Value": pack_value, "Price": price}
     if availability_sorted not in pack_val_added:
         ranking_array_packValue.append(availability_sorted)
@@ -404,14 +404,18 @@ master_dict_list = []
 for listed in [ranking_array_total_prizes, ranking_array_odds, ranking_array_availability, ranking_array_packValue, ranking_array_net_gain]:
     for dicted in listed:
         fake_dict = dicted
-        new_dict_value = fake_dict[list(fake_dict.keys())[0]]
+        new_dict_value = int(fake_dict[list(fake_dict.keys())[0]]) + 1
+
         new_dict_key = list(fake_dict.keys())[0]
-        fake_dict.update({new_dict_key: new_dict_value})
+        fake_dict[new_dict_key] = new_dict_value
+
         if fake_dict in master_dict_list:
             pass
         else:
             master_dict_list.append(dicted)
             print(dicted)
+        initial_val = 0
+
     print("\n")
 
 
