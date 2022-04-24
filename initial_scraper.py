@@ -166,7 +166,13 @@ def getTicketDetails(urls: list):
                                                               "Pack Value": int(
                                                                   guaranteed_per_pack_usd),
                                                               "Net Gain Index": net_gain}})
-        print(main_dict['ticket_info'][game_number])
+        print("\n")
+        print(f'Ticket Info: {main_dict["ticket_info"][game_number]}')
+        print(f'Odds Index: {main_dict["Odds Index"][adjusted_odds]}')
+        print(f'Net Gain Index: {main_dict["Net Gain Index"][net_gain]}')
+        print(f'Pack Value Index: {main_dict["Pack Value Index"][guaranteed_per_pack_usd]}')
+        print(f'Total Value Index: {main_dict["Total Value Index"][total_value]}')
+        print(f'Prize Availability Index: {main_dict["Prize Availability Index"][avg_availability_chance]}')
 
 
 
@@ -178,6 +184,7 @@ emailer.itoven_send_email_str(to="arthur@itoven-ai.co", subject=f"Lottery AI Rep
 # TODO ACCESS EACH URL WE FOUND AND GET ODDS AND ADD TO JSON OR DICT WITH NAME OF TICKET AND URL TO TICKET
 
 # TODO CREATE 0-100 SYSTEM FOR EACH ATTRIBUTE THEN RANK, based on rank in all tickets for that category (like madden player ratings)
+
 
 def TicketInfo(game_number):
     return main_dict['ticket_info'][game_number]
