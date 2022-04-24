@@ -9,7 +9,15 @@ driver = selenium.webdriver.Chrome()
 
 main_dict = {"base_url": "https://www.texaslottery.com/export/sites/lottery/Games/Scratch_Offs/index.html#",
              "price_points": [1, 2, 3, 5, 10, 20, 30, 50],
-             "ticket_info": {}}
+             "ticket_info": {},
+             "Ticket Numbers": [],
+             "Pack Value Index": {},
+             "Prize Availability Index": {},  # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Total Value Index": {},  # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Net Gain Index": {},  # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Odds Index": {}   # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             }
+
 
 
 def OpenLotteryHomePage(price_point):  # in dollars, find the lottery page to extract info
@@ -51,6 +59,7 @@ def findDBClusters(full_string):
 
 #  print(GET_ALL_TICKET_URLS())
 def getTicketDetails(urls: list):
+    global main_dict
     for url in urls:
 
         driver.get(url)
@@ -75,7 +84,7 @@ def getTicketDetails(urls: list):
         for item in temp_full_string:
             temp_array.append(item)
         highest_prize = temp_array[0]
-        lowest_prize = temp_array[len(highest_prize)-3]
+        lowest_prize = main.getLowestPrize(temp_array)
         prize_data = temp_array
         claimed_ratio_data_points = []  # will average them
         available_ratio_data_points = []
@@ -91,20 +100,10 @@ def getTicketDetails(urls: list):
         avg_claimed_ratio = float(sum(claimed_ratio_data_points)/sum(available_ratio_data_points))
         avg_availability_chance = (1 - avg_claimed_ratio) * 100
         table_cells_prizes = temp_array
-        #  print({"Table Cells": table_cells_prizes})
+        #print({"Table Cells": table_cells_prizes})
         # TO DO GAME NUMBER, GAME ODDS, PACK SIZE, TOTAL PRIZES, LARGEST_PRIZE, MEAN_PRIZE, PACK
 
-        #print(f"Price Per Ticket: {lowest_prize}")
-        print(f"Game Number: {game_number}")
-        print(f"Game Name: {game_name}")
-        print(f"Total Prize Money Pool: ${total_prizes_dollars}")
-        print(f"Average ticket winnings: ${round(guaranteed_per_ticket_usd, 5)}")
-        print(f"Ticket Price: ${lowest_prize}")
-        print(f"Total Possible Tickets: {max_tickets}")
-        print(f"Adjusted Odds: 1 in {odds2}")
-        print(f"Highest Prize: {highest_prize}")
-        print(f"Current Prize Availability: {round(avg_availability_chance, 4)}%")
-        print(f"Pack Size: {pack_size} Tickets")
+        #  print(f"Price Per Ticket: {lowest_prize}")
         base_url = "https://www.texaslottery.com/"
         prefix_url_mod = "/export/sites/lottery/Images/scratchoffs/"
         suffix_url_mid = f"{game_number}_img1.gif"
@@ -113,28 +112,76 @@ def getTicketDetails(urls: list):
         url2 = f"{base_url}{prefix_url_mod}{suffix_url_mid}"
         image_urls = [url1, url2]
         # image_urls = image_urls.append(main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(page_src, "<img src=", '"')[0])
-        print({"Image URLS": image_urls})
         print("\n")
-        main_dict['ticket_info'].update({game_number: {"Game Name": game_name,
-                                         "Game Number": game_number,
-                                         "Prize Pool (USD)": float(total_prizes_dollars),
-                                         "Average Winnings Per Ticket": float(guaranteed_per_ticket_usd),
-                                         "Net Gain/Loss Per Ticket": float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", "")),
-                                         "Tickets In Circulation": float(max_tickets),
-                                         "Adjusted Odds": float(adjusted_odds),
-                                         "Pack Value (USD)": float(guaranteed_per_pack_usd),
-                                         "Highest Prize": float(int(str(highest_prize).replace("$", "").replace(",", ""))),
-                                         "Current Prize Availability": float(avg_availability_chance),
-                                         "Pack Size": float(int(pack_size)),
-                                         'Ticket Price USD': float(str(lowest_prize.replace("$", ""))),
-                                         "Image URLS": image_urls
-                                         }})
-        print(main_dict)
-        print("\n")
+        net_gain = float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", ""))
+        main_dict['ticket_info'].update({game_number: {
+         "Game Name": game_name,
+         "Game Number": game_number,
+         "Prize Pool (USD)": float(total_prizes_dollars),
+         "Average Winnings Per Ticket": float(guaranteed_per_ticket_usd),
+         "Net Gain/Loss Per Ticket": float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", "")),
+         "Tickets In Circulation": float(max_tickets),
+         "Adjusted Odds": float(adjusted_odds),
+         "Pack Value (USD)": int(guaranteed_per_pack_usd),
+         "Highest Prize": float(int(str(highest_prize).replace("$", "").replace(",", ""))),
+         "Current Prize Availability": float(avg_availability_chance),
+         "Pack Size": (int(pack_size)),
+         'Ticket Price USD': float(str(lowest_prize).replace("$", "")),
+         "Image Urls": image_urls,
+         "Ticket Url": url
+          }})
+        highest_prize = int(str(highest_prize).replace("$", "").replace(",", ""))
+        total_value = highest_prize + int(total_prizes_dollars) + int(guaranteed_per_pack_usd)
 
 
-print("\n")
+        #  print(main_dict['ticket_info'][game_number])
+        main_dict['Ticket Numbers'].append(game_number)
+
+        main_dict["Pack Value Index"].update({guaranteed_per_pack_usd: {"Game Number": game_number,
+                                                                        "Net Gain": net_gain,
+                                                                        "Total Value": total_prizes_dollars,
+                                                                        "Prize Availability": avg_availability_chance,
+                                                                        "Adjusted Odds": adjusted_odds}})
+        main_dict["Prize Availability Index"].update({avg_availability_chance: {"Game Number": game_number,
+                                                              "Net Gain": net_gain,
+                                                              "Total Value": total_prizes_dollars,
+                                                              "Pack Value": int(
+                                                                guaranteed_per_pack_usd),
+                                                              "Adjusted Odds": adjusted_odds}})
+        main_dict["Total Value Index"].update({total_value: {"Game Number": game_number,
+                                                              "Net Gain": net_gain,
+                                                              "Prize Availability Index": avg_availability_chance,
+                                                              "Pack Value": int(
+                                                                  guaranteed_per_pack_usd),
+                                                              "Adjusted Odds": adjusted_odds}})
+        main_dict["Net Gain Index"].update({net_gain: {"Game Number": game_number,
+                                                              "Total Value": total_value,
+                                                              "Prize Availability Index": avg_availability_chance,
+                                                              "Pack Value": int(
+                                                                  guaranteed_per_pack_usd),
+                                                              "Adjusted Odds": adjusted_odds}})
+        main_dict["Odds Index"].update({adjusted_odds: {"Game Number": game_number,
+                                                              "Total Value": total_value,
+                                                              "Prize Availability Index": avg_availability_chance,
+                                                              "Pack Value": int(
+                                                                  guaranteed_per_pack_usd),
+                                                              "Net Gain Index": net_gain}})
+        print(main_dict['ticket_info'][game_number])
+
+
+
+
 getTicketDetails(GET_ALL_TICKET_URLS())
+print('\n')
 main.save_to_file(file_name=f"Scraped_Texas_Lottery_{datetime.date.today()}.txt", final_string=str(main_dict))
 emailer.itoven_send_email_str(to="arthur@itoven-ai.co", subject=f"Lottery AI Report {datetime.date.today()}", message=str(main_dict))
 # TODO ACCESS EACH URL WE FOUND AND GET ODDS AND ADD TO JSON OR DICT WITH NAME OF TICKET AND URL TO TICKET
+
+# TODO CREATE 0-100 SYSTEM FOR EACH ATTRIBUTE THEN RANK, based on rank in all tickets for that category (like madden player ratings)
+
+def TicketInfo(game_number):
+    return main_dict['ticket_info'][game_number]
+
+
+for ticket_number in main_dict["Ticket Numbers"]:
+    ticket_info = TicketInfo(ticket_number)
