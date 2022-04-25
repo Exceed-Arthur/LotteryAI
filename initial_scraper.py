@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 import main
 import selenium.webdriver, selenium
 import time
+
 driver = selenium.webdriver.Chrome()
 
 main_dict = {"base_url": "https://www.texaslottery.com/export/sites/lottery/Games/Scratch_Offs/index.html#",
@@ -12,10 +13,13 @@ main_dict = {"base_url": "https://www.texaslottery.com/export/sites/lottery/Game
              "ticket_info": {},
              "Ticket Numbers": [],
              "Pack Value Index": {},
-             "Prize Availability Index": {},  # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
-             "Total Value Index": {},  # Total Value : {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
-             "Net Gain Index": {},  # Net Gain: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
-             "Odds Index": {},   # Odds: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Prize Availability Index": {},
+             # Availability: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Total Value Index": {},
+             # Total Value : {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Net Gain Index": {},
+             # Net Gain: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
+             "Odds Index": {},  # Odds: {game_number, game_name, prize_total_value, net_gain_loss, price, adjusted_odds}
              "Adjusted Odds": {},
              "Net Gain": {},
              "Game Names Array": [],
@@ -31,7 +35,10 @@ main_dict = {"base_url": "https://www.texaslottery.com/export/sites/lottery/Game
              "Total Prizes Rank": [],
              "Pack Value Rank": [],
              "Net Gain Rank": [],
-             "Availability Rank": []
+             "Availability Rank": [],
+             "Star Rating": {},
+             "Ranking Dictionary": {},
+             "Secondary Dictionary": {}
              }
 
 
@@ -46,7 +53,8 @@ def get_pg_source(url):
 
 def GET_TICKET_URLS_PRICE_POINT(price_point):  # in dollars
     OpenLotteryHomePage(
-        main_dict["price_points"][main_dict["price_points"].index(price_point)])  # Each price point has a different URL which leads to its tickets
+        main_dict["price_points"][main_dict["price_points"].index(
+            price_point)])  # Each price point has a different URL which leads to its tickets
     mod_url_src = (get_pg_source(driver.current_url))  # Obtain Page Source for Ticket Catalogue Page
     ticket_numbers_at_pricePoint = (main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(mod_url_src, ".html_",
                                                                                '.html"'))  # Get All Ticket Numbers at this price point
@@ -66,9 +74,11 @@ def GET_ALL_TICKET_URLS():  # Should Get About 50 Links To Specific Tickets/Info
 def findDBClusters(full_string):
     for match in main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=full_string, p1="<tr>", p2="</tr>"):
         prize_usd = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=match, p1="<td>", p2="</td>")[0]
-        totalPrizesForTicketAtAmount = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=match, p1="<td>", p2="</td>")[1]
-        claimed_prizes_at_level = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=match, p1="<td>", p2="</td>")[2]
-        print(prize_usd, totalPrizesForTicketAtAmount)
+        totalPrizesForTicketAtAmount = \
+        main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=match, p1="<td>", p2="</td>")[1]
+        claimed_prizes_at_level = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=match, p1="<td>", p2="</td>")[
+            2]
+
         blurb_info = f"There are "
 
 
@@ -85,18 +95,24 @@ def getTicketDetails(urls: list):
             findDBClusters(full_string=page_src)
             game_number = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=page_src, p1="Game No. ", p2=" - ")[0]
 
-            game_name = driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[1]/div/div/h2").text.split("- ")[1]
+            game_name = \
+            driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[1]/div/div/h2").text.split("- ")[1]
 
-            total_prizes_dollars = int(float(driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[2]/div[2]/div/ul").text.split("$")[1].split(" ")[0])*1000000)
+            total_prizes_dollars = int(float(
+                driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[2]/div[2]/div/ul").text.split("$")[
+                    1].split(" ")[0]) * 1000000)
 
-            pack_size = main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=page_src, p1="Pack Size: ", p2=" tickets")[0]
-            max_tickets = driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[2]/div[2]/p[2]").text.split("approximately ")[1].split("*")[0].replace(",", "")
+            pack_size = \
+            main.FIND_ALL_SUBSTRINGS_BETWEEN_2_STRINGS(full_string=page_src, p1="Pack Size: ", p2=" tickets")[0]
+            max_tickets = driver.find_element(By.XPATH, "//*[@id=\"content\"]/div/div/div[2]/div[2]/p[2]").text.split(
+                "approximately ")[1].split("*")[0].replace(",", "")
             guaranteed_per_pack_usd = page_src.split("Amount = $")[1].split(" per pack")[0]
             guaranteed_per_ticket_usd = float(guaranteed_per_pack_usd) / float(int(pack_size))
             # print(page_src)
             odds2 = main.SANDWHICHED_SUBSTRING(full_string=page_src, slice_1="1 in ", slice_2="**")
-            adjusted_odds = float(1.0/float(odds2))
-            temp_full_string = main.list_SANDWHICHED_SUBSTRING(full_string=page_src, slice_1="<tbody>", slice_2="</tbody>")
+            adjusted_odds = float(1.0 / float(odds2))
+            temp_full_string = main.list_SANDWHICHED_SUBSTRING(full_string=page_src, slice_1="<tbody>",
+                                                               slice_2="</tbody>")
             temp_array = []
             for item in temp_full_string:
                 temp_array.append(item)
@@ -105,7 +121,7 @@ def getTicketDetails(urls: list):
             prize_data = temp_array
             claimed_ratio_data_points = []  # will average them
             available_ratio_data_points = []
-            for i in range(1, len(prize_data)-1, 3):
+            for i in range(1, len(prize_data) - 1, 3):
                 if i not in [6]:
                     available_tickets = str(prize_data[i]).replace(",", "").replace("$", "")
                     available_tickets = int(available_tickets)
@@ -114,10 +130,10 @@ def getTicketDetails(urls: list):
                 claimed_tickets = str(prize_data[i]).replace(",", "").replace("$", "")
                 claimed_tickets = int(claimed_tickets)
                 claimed_ratio_data_points.append(claimed_tickets)
-            avg_claimed_ratio = float(sum(claimed_ratio_data_points)/sum(available_ratio_data_points))
+            avg_claimed_ratio = float(sum(claimed_ratio_data_points) / sum(available_ratio_data_points))
             avg_availability_chance = (1 - avg_claimed_ratio) * 100
             table_cells_prizes = temp_array
-            #print({"Table Cells": table_cells_prizes})
+            # print({"Table Cells": table_cells_prizes})
             # TO DO GAME NUMBER, GAME ODDS, PACK SIZE, TOTAL PRIZES, LARGEST_PRIZE, MEAN_PRIZE, PACK
 
             #  print(f"Price Per Ticket: {lowest_prize}")
@@ -132,21 +148,22 @@ def getTicketDetails(urls: list):
             print("\n")
             net_gain = float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", ""))
             main_dict['ticket_info'].update({game_number: {
-             "Game Name": game_name,
-             "Game Number": game_number,
-             "Prize Pool (USD)": float(total_prizes_dollars),
-             "Average Winnings Per Ticket": float(guaranteed_per_ticket_usd),
-             "Net Gain/Loss Per Ticket": float(guaranteed_per_ticket_usd) - float(str(lowest_prize).replace("$", "")),
-             "Tickets In Circulation": float(max_tickets),
-             "Adjusted Odds": float(adjusted_odds),
-             "Pack Value (USD)": int(guaranteed_per_pack_usd),
-             "Highest Prize": float(int(str(highest_prize).replace("$", "").replace(",", ""))),
-             "Current Prize Availability": float(avg_availability_chance),
-             "Pack Size": (int(pack_size)),
-             'Ticket Price USD': float(str(lowest_prize).replace("$", "")),
-             "Image Urls": image_urls,
-             "Ticket Url": url
-              }})
+                "Game Name": game_name,
+                "Game Number": game_number,
+                "Prize Pool (USD)": float(total_prizes_dollars),
+                "Average Winnings Per Ticket": float(guaranteed_per_ticket_usd),
+                "Net Gain/Loss Per Ticket": float(guaranteed_per_ticket_usd) - float(
+                    str(lowest_prize).replace("$", "")),
+                "Tickets In Circulation": float(max_tickets),
+                "Adjusted Odds": float(adjusted_odds),
+                "Pack Value (USD)": int(guaranteed_per_pack_usd),
+                "Highest Prize": float(int(str(highest_prize).replace("$", "").replace(",", ""))),
+                "Current Prize Availability": float(avg_availability_chance),
+                "Pack Size": (int(pack_size)),
+                'Ticket Price USD': float(str(lowest_prize).replace("$", "")),
+                "Image Urls": image_urls,
+                "Ticket Url": url
+            }})
             highest_prize = int(str(highest_prize).replace("$", "").replace(",", ""))
             total_value = highest_prize + int(total_prizes_dollars) + int(guaranteed_per_pack_usd)
 
@@ -158,32 +175,33 @@ def getTicketDetails(urls: list):
             main_dict["Pack Value Index"].update({guaranteed_per_pack_usd: {"Game Number": game_number,
                                                                             "Net Gain": net_gain,
                                                                             "Total Value": total_prizes_dollars,
+
                                                                             "Prize Availability": avg_availability_chance,
                                                                             "Adjusted Odds": adjusted_odds}})
             main_dict["Prize Availability Index"].update({avg_availability_chance: {"Game Number": game_number,
-                                                                  "Net Gain": net_gain,
-                                                                  "Total Value": total_prizes_dollars,
-                                                                  "Pack Value": int(
-                                                                    guaranteed_per_pack_usd),
-                                                                  "Adjusted Odds": adjusted_odds}})
+                                                                                    "Net Gain": net_gain,
+                                                                                    "Total Value": total_prizes_dollars,
+                                                                                    "Pack Value": int(
+                                                                                        guaranteed_per_pack_usd),
+                                                                                    "Adjusted Odds": adjusted_odds}})
             main_dict["Total Value Index"].update({total_value: {"Game Number": game_number,
-                                                                  "Net Gain": net_gain,
-                                                                  "Prize Availability Index": avg_availability_chance,
-                                                                  "Pack Value": int(
-                                                                      guaranteed_per_pack_usd),
-                                                                  "Adjusted Odds": adjusted_odds}})
+                                                                 "Net Gain": net_gain,
+                                                                 "Prize Availability Index": avg_availability_chance,
+                                                                 "Pack Value": int(
+                                                                     guaranteed_per_pack_usd),
+                                                                 "Adjusted Odds": adjusted_odds}})
             main_dict["Net Gain Index"].update({net_gain: {"Game Number": game_number,
-                                                                  "Total Value": total_value,
-                                                                  "Prize Availability Index": avg_availability_chance,
-                                                                  "Pack Value": int(
-                                                                      guaranteed_per_pack_usd),
-                                                                  "Adjusted Odds": adjusted_odds}})
+                                                           "Total Value": total_value,
+                                                           "Prize Availability Index": avg_availability_chance,
+                                                           "Pack Value": int(
+                                                               guaranteed_per_pack_usd),
+                                                           "Adjusted Odds": adjusted_odds}})
             main_dict["Odds Index"].update({adjusted_odds: {"Game Number": game_number,
-                                                                  "Total Value": total_value,
-                                                                  "Prize Availability Index": avg_availability_chance,
-                                                                  "Pack Value": int(
-                                                                      guaranteed_per_pack_usd),
-                                                                  "Net Gain Index": net_gain}})
+                                                            "Total Value": total_value,
+                                                            "Prize Availability Index": avg_availability_chance,
+                                                            "Pack Value": int(
+                                                                guaranteed_per_pack_usd),
+                                                            "Net Gain Index": net_gain}})
 
             main_dict["Adjusted Odds"].update({adjusted_odds: game_number})
             main_dict["Net Gain"].update({net_gain: game_number})
@@ -200,19 +218,12 @@ def getTicketDetails(urls: list):
             main_dict["Total Value Array"].sort(reverse=True)
             main_dict["Availability Array"].append(avg_availability_chance)
             main_dict["Availability Array"].sort(reverse=True)
-
-            print("\n")
-            print(f'Ticket Info: {main_dict["ticket_info"][game_number]}')
-            print(f'Odds Index: {adjusted_odds}: {main_dict["Odds Index"][adjusted_odds]}')
-            print(f'Net Gain Index: {net_gain}: {main_dict["Net Gain Index"][net_gain]}')
-            print(f'Pack Value Index: {guaranteed_per_pack_usd: }{main_dict["Pack Value Index"][guaranteed_per_pack_usd]}')
-            print(f'Total Value Index: {total_value}: {main_dict["Total Value Index"][total_value]}')
-            print(f'Prize Availability Index: {avg_availability_chance} {main_dict["Prize Availability Index"][avg_availability_chance]}')
+            main_dict["Game Names Array"].append(game_name)
         except:
             pass
 
 
-def sortOddsIndex():  #Returns a list of lists, index value 1 leads to game number
+def sortOddsIndex():  # Returns a list of lists, index value 1 leads to game number
     odds_temp_array = []
     for key in list(main_dict["Adjusted Odds"].keys()):
         odds_temp_array.append(key)
@@ -224,7 +235,7 @@ def sortOddsIndex():  #Returns a list of lists, index value 1 leads to game numb
     return odds
 
 
-def sortNetGainIndex():  #Returns a list of lists, index value 1 leads to game number
+def sortNetGainIndex():  # Returns a list of lists, index value 1 leads to game number
     net_temp_array = []
     for key in list(main_dict["Net Gain"].keys()):
         net_temp_array.append(key)
@@ -236,7 +247,7 @@ def sortNetGainIndex():  #Returns a list of lists, index value 1 leads to game n
     return odds
 
 
-def sortPackValueIndex():  #Returns a list of lists, index value 1 leads to game number
+def sortPackValueIndex():  # Returns a list of lists, index value 1 leads to game number
     temp_array = []
     for key in list(main_dict["Pack Value"].keys()):
         temp_array.append(key)
@@ -248,7 +259,7 @@ def sortPackValueIndex():  #Returns a list of lists, index value 1 leads to game
     return temp_array
 
 
-def sortTotalValueIndex():  #Returns a list of lists, index value 1 leads to game number
+def sortTotalValueIndex():  # Returns a list of lists, index value 1 leads to game number
     temp_array = []
     for key in list(main_dict["Total Value"].keys()):
         temp_array.append(key)
@@ -260,7 +271,7 @@ def sortTotalValueIndex():  #Returns a list of lists, index value 1 leads to gam
     return temp_array
 
 
-def sortAvailabilityValueIndex():  #Returns a list of lists, index value 1 leads to game number
+def sortAvailabilityValueIndex():  # Returns a list of lists, index value 1 leads to game number
     temp_array = []
     for key in list(main_dict["Prize Availability"].keys()):
         temp_array.append(key)
@@ -272,14 +283,9 @@ def sortAvailabilityValueIndex():  #Returns a list of lists, index value 1 leads
     return temp_array
 
 
-
-
-
 getTicketDetails(GET_ALL_TICKET_URLS())
-print('\n')
-main.save_to_file(file_name=f"Scraped_Texas_Lottery_{datetime.date.today()}.txt", final_string=str(main_dict))
-emailer.itoven_send_email_str(to="arthur@itoven-ai.co", subject=f"Lottery AI Report {datetime.date.today()}", message=str(main_dict))
 
+main.save_to_file(file_name=f"Scraped_Texas_Lottery_{datetime.date.today()}.txt", final_string=str(main_dict))
 
 sortedAvailability = sortAvailabilityValueIndex()
 sortedTotalValues = sortTotalValueIndex()
@@ -295,26 +301,24 @@ ranking_array_packValue = []
 # TODO BUT JUST COMPLETED BELOW FOR ONE CATEGORY
 
 
-
-
 temp_array_pack_values = []
-for i in range(len(main_dict["Pack Value Array"])-1):
+for i in range(len(main_dict["Pack Value Array"]) - 1):
     if main_dict["Pack Value Array"][i] not in temp_array_pack_values:
         temp_array_pack_values.append(main_dict["Pack Value Array"][i])
 temp_array_availability_values = []
-for i in range(len(main_dict["Availability Array"])-1):
+for i in range(len(main_dict["Availability Array"]) - 1):
     if main_dict["Availability Array"][i] not in temp_array_availability_values:
         temp_array_pack_values.append(main_dict["Availability Array"][i])
 temp_array_odds_values = []
-for i in range(len(main_dict["Adjusted Odds Array"])-1):
+for i in range(len(main_dict["Adjusted Odds Array"]) - 1):
     if main_dict["Adjusted Odds Array"][i] not in temp_array_odds_values:
         temp_array_pack_values.append(main_dict["Adjusted Odds Array"][i])
 temp_array_netgain_values = []
-for i in range(len(main_dict["Net Gain Array"])-1):
+for i in range(len(main_dict["Net Gain Array"]) - 1):
     if main_dict["Net Gain Array"][i] not in temp_array_netgain_values:
         temp_array_pack_values.append(main_dict["Net Gain Array"][i])
 temp_array_totalval_values = []
-for i in range(len(main_dict["Total Value Array"])-1):
+for i in range(len(main_dict["Total Value Array"]) - 1):
     if main_dict["Total Value Array"][i] not in temp_array_totalval_values:
         temp_array_pack_values.append(main_dict["Total Value Array"][i])
 
@@ -325,8 +329,10 @@ total_val_added = []
 pack_val_added = []
 net_gain_added = []
 print("\n")
-for i in range(0, len(main_dict["Pack Value Array"])-1):
+for i in range(0, len(main_dict["Pack Value Array"]) - 1):
     """AVAILABILITY SORTING"""
+    odds = main_dict["Adjusted Odds Array"][i]
+    total_value = main_dict["Total Value Array"][i]
     availability = main_dict["Availability Array"][i]
     game_number = main_dict["Prize Availability Index"][availability]["Game Number"]
     ticket_info = main_dict['ticket_info'][game_number]
@@ -336,23 +342,25 @@ for i in range(0, len(main_dict["Pack Value Array"])-1):
     rank = i + 1
 
     availability_sorted = {"Availability Rank": rank, "Game": game_name, "Game Number": game_number,
-                           "Availability": availability, "Price": price}
-    if availability_sorted in avail_added:
+                           "Total Value Prizes": total_value, "Price": price, "Adjusted Odds": odds,
+                           "Availability": availability}
+    if availability_sorted not in avail_added:
         ranking_array_availability.append(availability_sorted)
-        #print(availability_sorted)
+        # print(availability_sorted)
 
     """ODDS SORTING"""
-    odds = main_dict["Adjusted Odds Array"][i]
+
     game_number = main_dict["Odds Index"][odds]["Game Number"]
     ticket_info = main_dict['ticket_info'][game_number]
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
     rank = i + 1
     availability_sorted = {"Adjusted Odds Rank": rank, "Game": game_name, "Game Number": game_number,
-                           "Adjusted Odds": odds, "Price": price}
+                           "Adjusted Odds": odds, "Total Value Prizes": total_value, "Price": price,
+                           "Availability": availability}
     if availability_sorted not in odds_added:
         ranking_array_odds.append(availability_sorted)
-        #print(availability_sorted)
+        # print(availability_sorted)
 
     """Net Gain SORTING"""
     net_gain = main_dict["Net Gain Array"][i]
@@ -362,10 +370,11 @@ for i in range(0, len(main_dict["Pack Value Array"])-1):
     price = ticket_info["Ticket Price USD"]
     rank = i + 1
     availability_sorted = {"Net Gain Rank": rank, "Game": game_name, "Game Number": game_number,
-                           "Net Gain": net_gain, "Price": price}
+                           "Total Value Prizes": total_value, "Price": price, "Adjusted Odds": odds,
+                           "Availability": availability, "Net Gain": net_gain}
     if availability_sorted not in net_gain_added:
         ranking_array_net_gain.append(availability_sorted)
-        #print(availability_sorted)
+        # print(availability_sorted)
 
     """TOTAL VALUE PRIZES SORTING"""
     total_value = main_dict["Total Value Array"][i]
@@ -375,11 +384,11 @@ for i in range(0, len(main_dict["Pack Value Array"])-1):
     price = ticket_info["Ticket Price USD"]
     rank = i + 1
     availability_sorted = {"Total Prizes Rank": rank, "Game": game_name, "Game Number": game_number,
-                           "Total Value Prizes": total_value, "Price": price}
+                           "Total Value Prizes": total_value, "Price": price, "Adjusted Odds": odds,
+                           "Availability": availability, "Net Gain": net_gain}
     if availability_sorted not in total_val_added:
         ranking_array_total_prizes.append(availability_sorted)
-        #print(availability_sorted)
-
+        # print(availability_sorted)
 
     pack_value = main_dict["Pack Value Array"][i]
     game_number = main_dict["Pack Value Index"][pack_value]["Game Number"]
@@ -387,11 +396,14 @@ for i in range(0, len(main_dict["Pack Value Array"])-1):
     game_name = ticket_info["Game Name"]
     price = ticket_info["Ticket Price USD"]
     rank = i + 1
-    availability_sorted = {"Pack Value Rank": rank, "Game": game_name, "Game Number": game_number, "Pack Value": pack_value, "Price": price}
+    availability_sorted = {"Pack Value Rank": rank, "Game": game_name, "Game Number": game_number,
+                           "Total Value Prizes": total_value, "Price": price, "Adjusted Odds": odds,
+                           "Availability": availability, "Net Gain": net_gain}
     if availability_sorted not in pack_val_added:
         ranking_array_packValue.append(availability_sorted)
-        #print(availability_sorted)
+        # print(availability_sorted)
     print("\n")
+
 
 def TicketInfo(game_number):
     return main_dict['ticket_info'][game_number]
@@ -402,13 +414,156 @@ for ticket_number in main_dict["Ticket Numbers"]:
 
 master_dict_list = []
 boof_array = []
-for listed in [ranking_array_total_prizes, ranking_array_odds, ranking_array_availability, ranking_array_packValue, ranking_array_net_gain]:
+for listed in [ranking_array_total_prizes, ranking_array_odds, ranking_array_availability, ranking_array_packValue,
+               ranking_array_net_gain]:
     for dicted in listed:
         if str(dicted).split(", ", 1)[1] not in boof_array:
             master_dict_list.append(dicted)
-            boof_array.append(str(dicted).split(", ",1)[1])
+            boof_array.append(str(dicted).split(", ", 1)[1])
+            game_number = dicted["Game Number"]
+            ticket_info = main_dict["ticket_info"][game_number]
             print(dicted)
-    print("\n")
+
+def get_all_game_names():
+    name_array = []
+    for dictionary in master_dict_list:
+        if dictionary["Game"] not in name_array:
+            name_array.append(dictionary["Game"])
+    return name_array
 
 
+for dictionary in master_dict_list:
+    Adjusted_Odds_Rank = None
+    Pack_Value_Rank = None
+    Availability_Rank = None
+    Availability = None
+    Total_Prizes_Rank = None
+    Net_Gain_Rank = None
+    net_gain = None
+    Pack_Value = None
+    Adjusted_Odds = None
+    Total_Value_Prizes = None
+    Price = None
+    Game = dictionary["Game"]
+    Game_Number = dictionary["Game Number"]
+    try:
+        Price = dictionary["Price"]
+    except:
+        pass
+    try:
+        Total_Value_Prizes = dictionary["Total Value Prizes"]
+    except:
+        pass
+    Price = dictionary["Price"]
+    try:
+        Adjusted_Odds_Rank = dictionary["Adjusted Odds Rank"]
+    except:
+        pass
+    try:
+        Pack_Value_Rank = dictionary["Pack Value Rank"]
+    except:
+        pass
+    try:
+        Availability_Rank = dictionary["Availability Rank"]
+    except:
+        pass
+    try:
+        Total_Prizes_Rank = dictionary["Total Prizes Rank"]
+    except:
+        pass
+    try:
+        Availability = dictionary["Availability"]
+    except:
+        pass
+    try:
+        Net_Gain_Rank = dictionary["Net Gain Rank"]
+    except:
+        pass
+    try:
+        Adjusted_Odds = dictionary['Adjusted Odds']
+    except:
+        pass
+    try:
+        net_gain = dictionary["Net Gain"]
+    except:
+        pass
+    base_list_pre_tuple = [Game, Game_Number]
+    base_tuple = tuple(base_list_pre_tuple)
+    try:
+        if not main_dict["Secondary Dictionary"][base_tuple]:
+            main_dict["Secondary Dictionary"].update({base_tuple: []})
+    except KeyError:
+        main_dict["Secondary Dictionary"].update({base_tuple: []})
+    if net_gain:
+        minor_dictionary = {"Net Gain": net_gain}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Availability:
+        minor_dictionary = {"Availability": Availability}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Adjusted_Odds:
+        minor_dictionary = {"Adjusted Odds": Adjusted_Odds}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Total_Value_Prizes:
+        minor_dictionary = {"Total Value Prizes": Total_Value_Prizes}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Price:
+        minor_dictionary = {"Price": Price}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Pack_Value:
+        minor_dictionary = {"Pack Value": Pack_Value}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Net_Gain_Rank:
+        minor_dictionary = {"Net Gain Rank": Net_Gain_Rank}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Availability_Rank:
+        minor_dictionary = {"Availability Rank": Availability_Rank}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Adjusted_Odds_Rank:
+        minor_dictionary = {"Adjusted Odds Rank": Adjusted_Odds_Rank}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Total_Prizes_Rank:
+        minor_dictionary = {"Total Prizes Rank": Total_Prizes_Rank}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Pack_Value_Rank:
+        minor_dictionary = {"Pack Value Rank": Pack_Value_Rank}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Price:
+        minor_dictionary = {"Price": Price}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Game_Number:
+        minor_dictionary = {"Game Number": Game_Number}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
+    if Game:
+        minor_dictionary = {"Game Name": Game}
+        main_dict["Secondary Dictionary"][base_tuple].append(minor_dictionary)
 
+
+def clean_duplicates_ticket_info_dictionaries():
+    for key in list(main_dict["Secondary Dictionary"].keys()):
+        unabridged_dictionary_array = main_dict["Secondary Dictionary"][key]
+        holding_array_1 = []
+        for key_pair in unabridged_dictionary_array:
+            if key_pair not in holding_array_1:
+                if key_pair != "":
+                    holding_array_1.append(key_pair)
+        main_dict["Secondary Dictionary"][key] = holding_array_1
+
+
+clean_duplicates_ticket_info_dictionaries()
+
+
+def update_table_dynamo_ticket_info():
+    import server_functions
+    listed_ticket_dictionaries = []
+    for key in list(main_dict["Secondary Dictionary"].keys()):
+        if type(key) is not tuple:
+            pass
+        else:
+            print(key)
+            listed_ticket_dictionaries.append(main_dict["Secondary Dictionary"][key])
+            print(main_dict["Secondary Dictionary"][key])
+
+    server_functions.update_ticket_info_table(listed_ticket_dictionaries)
+
+
+update_table_dynamo_ticket_info()
